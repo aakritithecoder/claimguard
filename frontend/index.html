@@ -1,0 +1,128 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>ClaimGuard — Live Call Monitor</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background:#0b0f1a; color:#e8eaf0; padding:32px; margin:0; }
+  header { display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; padding-bottom:16px; border-bottom:1px solid #22283a; flex-wrap: wrap; gap: 12px; }
+  h1 { font-size:22px; margin:0; letter-spacing:-0.3px; }
+  button { background:#3b82f6; color:white; border:none; padding:10px 20px; border-radius:8px; font-size:14px; font-weight:600; cursor:pointer; }
+  button.stop { background:#f43f5e; }
+  .status { font-size:12px; color:#8b93a7; display:flex; align-items:center; gap:6px; }
+  .dot { width:8px; height:8px; border-radius:50%; background:#565e73; }
+  .dot.live { background:#22c55e; box-shadow:0 0 8px #22c55e; animation:pulse 1.5s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.4;} }
+  .claim { border-left:4px solid #3a4155; padding:14px 18px; margin-bottom:12px; border-radius:8px; background:#131826; }
+  .high { border-left-color:#f43f5e; } .medium { border-left-color:#f59e0b; } .low { border-left-color:#22c55e; }
+  .badge { font-size:11px; text-transform:uppercase; letter-spacing:0.5px; color:#8b93a7; margin-bottom:6px; display:flex; gap:8px; }
+  .risk-high { color:#f43f5e; font-weight:600; } .risk-medium { color:#f59e0b; font-weight:600; } .risk-low { color:#22c55e; font-weight:600; }
+  .claim-text { font-size:15px; margin-bottom:6px; }
+  .evidence { font-size:13px; color:#8b93a7; line-height:1.4; }
+  .empty { color:#565e73; padding:40px 0; text-align:center; font-size:14px; }
+</style>
+</head>
+<body>
+  <header>
+    <h1>ClaimGuard — Live Call Monitor</h1>
+    <div style="display:flex; align-items:center; gap:16px;">
+      <div class="status"><span class="dot" id="dot"></span> <span id="statusText">Not listening</span></div>
+      <button id="micBtn">🎙️ Start Listening</button>
+    </div>
+  </header>
+  <div id="claims"><div class="empty">Click "Start Listening" and speak.</div></div>
+
+<script>
+let ws, audioCtx, source, processor, stream;
+let listening = false;
+
+function downsampleTo16k(buf, inRate) {
+  if (inRate === 16000) return buf;
+  const ratio = inRate / 16000;
+  const len = Math.round(buf.length / ratio);
+  const out = new Float32Array(len);
+  let ri = 0, bi = 0;
+  while (ri < len) {
+    const nextBi = Math.round((ri + 1) * ratio);
+    let sum = 0, cnt = 0;
+    for (let i = bi; i < nextBi && i < buf.length; i++) { sum += buf[i]; cnt++; }
+    out[ri] = cnt ? sum / cnt : 0;
+    bi = nextBi; ri++;
+  }
+  return out;
+}
+function floatTo16BitPCM(f32) {
+  const buf = new ArrayBuffer(f32.length * 2);
+  const view = new DataView(buf);
+  for (let i = 0, off = 0; i < f32.length; i++, off += 2) {
+    let s = Math.max(-1, Math.min(1, f32[i]));
+    view.setInt16(off, s < 0 ? s * 0x8000 : s * 0x7fff, true);
+  }
+  return buf;
+}
+
+async function startListening() {
+  const wsProtocol = location.protocol === "https:" ? "wss:" : "ws:";
+  ws = new WebSocket(`${wsProtocol}//${location.host}/ws/audio`);
+  ws.binaryType = "arraybuffer";
+  await new Promise((resolve, reject) => { ws.onopen = resolve; ws.onerror = reject; });
+
+  stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  source = audioCtx.createMediaStreamSource(stream);
+  processor = audioCtx.createScriptProcessor(4096, 1, 1);
+  const mute = audioCtx.createGain();
+  mute.gain.value = 0;
+
+  processor.onaudioprocess = (e) => {
+    const input = e.inputBuffer.getChannelData(0);
+    const down = downsampleTo16k(input, audioCtx.sampleRate);
+    const pcm = floatTo16BitPCM(down);
+    if (ws.readyState === WebSocket.OPEN) ws.send(pcm);
+  };
+
+  source.connect(processor);
+  processor.connect(mute);
+  mute.connect(audioCtx.destination);
+
+  listening = true;
+  document.getElementById("dot").classList.add("live");
+  document.getElementById("statusText").textContent = "Listening";
+  const btn = document.getElementById("micBtn");
+  btn.textContent = "⏹️ Stop Listening";
+  btn.classList.add("stop");
+}
+
+function stopListening() {
+  if (processor) processor.disconnect();
+  if (source) source.disconnect();
+  if (stream) stream.getTracks().forEach(t => t.stop());
+  if (ws) ws.close();
+  listening = false;
+  document.getElementById("dot").classList.remove("live");
+  document.getElementById("statusText").textContent = "Not listening";
+  const btn = document.getElementById("micBtn");
+  btn.textContent = "🎙️ Start Listening";
+  btn.classList.remove("stop");
+}
+
+document.getElementById("micBtn").onclick = () => listening ? stopListening() : startListening();
+
+async function poll() {
+  const res = await fetch(`/api/claims?call_id=demo-call-1`);
+  const claims = await res.json();
+  const el = document.getElementById('claims');
+  if (!claims.length) { el.innerHTML = '<div class="empty">Click "Start Listening" and speak.</div>'; return; }
+  el.innerHTML = claims.slice().reverse().map(c => `
+    <div class="claim ${c.risk}">
+      <div class="badge"><span>${c.speaker}</span> · <span>${c.verdict}</span> · <span class="risk-${c.risk}">${c.risk} risk</span> · <span>${(c.confidence*100).toFixed(0)}%</span></div>
+      <div class="claim-text">${c.text}</div>
+      <div class="evidence">${c.evidence}</div>
+    </div>`).join('');
+}
+setInterval(poll, 2000);
+poll();
+</script>
+</body>
+</html>
