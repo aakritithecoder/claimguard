@@ -1,3 +1,4 @@
+import requests
 import os, json, time, threading, uuid, hashlib
 from datetime import datetime, timezone
 from fastapi.responses import HTMLResponse, Response
@@ -209,21 +210,15 @@ FRONTEND_DIR = os.path.join(os.path.dirname(__file__), "..", "frontend")
 @app.get("/")
 def dashboard():
     with open(os.path.join(FRONTEND_DIR, "index.html"), encoding="utf-8") as f:
-        return HTMLResponse(f.read())
+        page = f.read()
+    agent_json = json.dumps({"id": VOICE_AGENT_ID, "name": "ClaimGuard Copilot"}).replace("<", "\\u003c")
+    page = page.replace("{{AGENT_JSON}}", agent_json)
+    return HTMLResponse(page)
 
 @app.get("/app.js")
 def talk_script():
     with open(os.path.join(FRONTEND_DIR, "talk.js"), encoding="utf-8") as f:
         return Response(f.read(), media_type="text/javascript")
-
-@app.get("/talk")
-def talk_page():
-    agent_name = "ClaimGuard Copilot"
-    agent_json = json.dumps({"id": VOICE_AGENT_ID, "name": agent_name}).replace("<", "\\u003c")
-    with open(os.path.join(FRONTEND_DIR, "talk.html"), encoding="utf-8") as f:
-        page = f.read()
-    page = page.replace("{{AGENT_NAME}}", agent_name).replace("{{AGENT_JSON}}", agent_json)
-    return HTMLResponse(page)
 
 @app.get("/token")
 def get_token():

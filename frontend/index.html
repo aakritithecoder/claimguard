@@ -1,44 +1,193 @@
-<!doctype html>
-<html>
-<head>
-<meta charset="UTF-8">
-<title>ClaimGuard — Live Call Monitor</title>
-<style>
-  * { box-sizing: border-box; }
-  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background:#0b0f1a; color:#e8eaf0; padding:32px; margin:0; }
-  header { display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; padding-bottom:16px; border-bottom:1px solid #22283a; flex-wrap: wrap; gap: 12px; }
-  h1 { font-size:22px; margin:0; letter-spacing:-0.3px; }
-  button { background:#3b82f6; color:white; border:none; padding:10px 20px; border-radius:8px; font-size:14px; font-weight:600; cursor:pointer; }
-  button.stop { background:#f43f5e; }
-  .status { font-size:12px; color:#8b93a7; display:flex; align-items:center; gap:6px; }
-  .dot { width:8px; height:8px; border-radius:50%; background:#565e73; }
-  .dot.live { background:#22c55e; box-shadow:0 0 8px #22c55e; animation:pulse 1.5s infinite; }
-  @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.4;} }
-  .claim { border-left:4px solid #3a4155; padding:14px 18px; margin-bottom:12px; border-radius:8px; background:#131826; }
-  .high { border-left-color:#f43f5e; } .medium { border-left-color:#f59e0b; } .low { border-left-color:#22c55e; }
-  .badge { font-size:11px; text-transform:uppercase; letter-spacing:0.5px; color:#8b93a7; margin-bottom:6px; display:flex; gap:8px; }
-  .risk-high { color:#f43f5e; font-weight:600; } .risk-medium { color:#f59e0b; font-weight:600; } .risk-low { color:#22c55e; font-weight:600; }
-  .claim-text { font-size:15px; margin-bottom:6px; }
-  .evidence { font-size:13px; color:#8b93a7; line-height:1.4; }
-  .empty { color:#565e73; padding:40px 0; text-align:center; font-size:14px; }
-</style>
-</head>
-<body>
-  <header>
-    <h1>ClaimGuard — Live Call Monitor</h1>
-    <div style="display:flex; align-items:center; gap:16px;">
-      <div class="status"><span class="dot" id="dot"></span> <span id="statusText">Not listening</span></div>
-      <button id="micBtn">🎙️ Start Listening</button>
-      <a href="/talk" target="_blank" style="text-decoration:none;">
-      <button style="background:#8b5cf6;">🗣️ Talk to ClaimGuard</button>
-      </a>
-    </div>
-  </header>
-  <div id="claims"><div class="empty">Click "Start Listening" and speak.</div></div>
+<!DOCTYPE html>
+<html class="dark" lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base { html, body { margin: 0; padding: 0; } body { overscroll-behavior: none; } main > :first-child { margin-top: 0 !important; } main > :last-child { margin-bottom: 0 !important; } } ::-webkit-scrollbar { display: none; }</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "error-container": "#93000a", "inverse-on-surface": "#2c303c", "error": "#ffb4ab", "primary": "#c0c1ff", "primary-fixed": "#e1e0ff", "inverse-surface": "#dfe2f2", "background": "#0f131e", "surface-container-low": "#171b27", "surface-dim": "#0f131e", "on-secondary-fixed-variant": "#005236", "inverse-primary": "#494bd6", "tertiary": "#ffb2b7", "on-error": "#690005", "on-tertiary": "#67001b", "on-surface": "#dfe2f2", "secondary": "#4edea3", "secondary-container": "#00a572", "on-primary-fixed": "#07006c", "secondary-fixed-dim": "#4edea3", "on-background": "#dfe2f2", "surface-variant": "#313441", "on-surface-variant": "#c7c4d7", "secondary-fixed": "#6ffbbe", "on-tertiary-fixed": "#40000d", "surface-container-highest": "#313441", "on-primary-container": "#0d0096", "tertiary-fixed": "#ffdadb", "tertiary-container": "#ff516a", "surface-container-lowest": "#0a0e19", "primary-container": "#8083ff", "outline-variant": "#464554", "surface-container-high": "#262a36", "on-tertiary-container": "#5b0017", "primary-fixed-dim": "#c0c1ff", "on-secondary": "#003824", "on-tertiary-fixed-variant": "#92002a", "surface-container": "#1b1f2b", "on-primary": "#1000a9", "surface-bright": "#353945", "outline": "#908fa0", "surface": "#0f131e", "on-primary-fixed-variant": "#2f2ebe", "on-error-container": "#ffdad6", "tertiary-fixed-dim": "#ffb2b7", "on-secondary-container": "#00311f", "on-secondary-fixed": "#002113", "surface-tint": "#c0c1ff" }, "borderRadius": { "DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem" }, "spacing": { "margin-desktop": "2rem", "space-xl": "2rem", "space-lg": "1.25rem", "space-xs": "0.25rem", "margin": "1rem", "gutter-desktop": "1.5rem", "space-sm": "0.5rem", "gutter": "1rem", "space-md": "0.75rem" }, "fontFamily": { "body-lg": ["Inter"], "headline-sm": ["Inter"], "label-lg": ["JetBrains Mono"], "body-md": ["Inter"], "label-md": ["JetBrains Mono"], "headline-lg": ["Inter"], "headline-md": ["Inter"], "label-sm": ["JetBrains Mono"], "headline-xl-mobile": ["Inter"], "headline-xl": ["Inter"], "metric-display": ["JetBrains Mono"], "body-sm": ["Inter"] }, "fontSize": { "body-lg": ["15px", { "lineHeight": "24px", "letterSpacing": "-0.005em", "fontWeight": "400" }], "headline-sm": ["15px", { "lineHeight": "22px", "letterSpacing": "-0.01em", "fontWeight": "600" }], "label-lg": ["13px", { "lineHeight": "18px", "letterSpacing": "-0.01em", "fontWeight": "500" }], "body-md": ["13px", { "lineHeight": "20px", "letterSpacing": "0em", "fontWeight": "400" }], "label-md": ["11px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500" }], "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "600" }], "headline-md": ["18px", { "lineHeight": "26px", "letterSpacing": "-0.015em", "fontWeight": "600" }], "label-sm": ["10px", { "lineHeight": "14px", "letterSpacing": "0.04em", "fontWeight": "500" }], "headline-xl-mobile": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "600" }], "headline-xl": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.025em", "fontWeight": "600" }], "metric-display": ["28px", { "lineHeight": "34px", "letterSpacing": "-0.03em", "fontWeight": "600" }], "body-sm": ["12px", { "lineHeight": "18px", "letterSpacing": "0em", "fontWeight": "400" }] } } } };</script></head><body class="bg-surface font-body-md text-body-md text-on-surface antialiased selection:bg-primary-container selection:text-on-primary-container">
+<script>window.AGENT = {{AGENT_JSON}};</script>
+<aside class="fixed left-0 top-0 h-full w-64 bg-surface-container-lowest z-50 flex flex-col justify-between py-space-lg"><div class="flex flex-col gap-space-lg"><div class="px-space-lg flex items-center gap-space-md"><span class="material-symbols-outlined text-primary text-[28px]">shield</span><div class="flex flex-col"><span class="font-headline-sm text-headline-sm text-on-surface tracking-tight leading-none">ClaimGuard</span><span class="font-label-sm text-label-sm text-primary tracking-widest uppercase mt-space-xs">Compliance OS</span></div></div><nav class="flex flex-col gap-space-xs px-space-md"><a class="flex items-center gap-space-md px-space-md py-space-sm rounded-lg transition-colors bg-surface-container-high text-primary font-medium" href="#"><span class="material-symbols-outlined text-[20px]">radar</span><span class="font-body-md text-body-md">Live Monitor</span></a><a class="flex items-center gap-space-md px-space-md py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" href="#"><span class="material-symbols-outlined text-[20px]">smart_toy</span><span class="font-body-md text-body-md">Copilot Studio</span></a><a class="flex items-center gap-space-md px-space-md py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" href="#"><span class="material-symbols-outlined text-[20px]">gavel</span><span class="font-body-md text-body-md">Policy &amp; Rules</span></a><a class="flex items-center gap-space-md px-space-md py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" href="#"><span class="material-symbols-outlined text-[20px]">lock_clock</span><span class="font-body-md text-body-md">Audit Vault</span></a></nav></div><div class="px-space-md flex flex-col gap-space-sm"><div class="bg-surface-container p-space-md rounded-xl flex items-center justify-between"><div class="flex flex-col"><span class="font-label-sm text-label-sm text-outline uppercase">Backend</span><span class="font-label-md text-label-md text-secondary" id="backend-health">checking...</span></div><span class="material-symbols-outlined text-secondary text-[18px]">wifi_tethering</span></div></div></aside>
+<div class="pl-64"><header class="fixed top-0 left-64 right-0 h-16 bg-surface/85 backdrop-blur-xl z-40 px-space-lg flex items-center justify-between"><div class="flex items-center gap-space-lg"><nav class="flex items-center bg-surface-container-lowest p-space-xs rounded-lg"><a class="px-space-md py-space-xs rounded-lg transition-colors bg-surface-container-highest text-primary font-medium shadow-sm" href="#" id="tab-btn-monitor" onclick="switchView('monitor');return false;">Monitor</a><a class="px-space-md py-space-xs rounded-lg font-body-md text-body-md text-on-surface-variant hover:text-on-surface transition-colors" href="#" id="tab-btn-copilot" onclick="switchView('copilot');return false;">Talk to Copilot</a></nav><div class="hidden xl:flex items-center gap-space-xs text-outline font-label-md text-label-md"><span class="text-outline-variant">Call:</span><span class="text-on-surface-variant">demo-call-1</span></div></div><div class="flex items-center gap-space-lg"><div class="flex items-center gap-space-sm bg-surface-container px-space-md py-space-xs rounded-full" id="status-pill"><span class="relative flex h-2 w-2" id="status-beacon"><span class="relative inline-flex rounded-full h-2 w-2 bg-outline"></span></span><span class="font-label-md text-label-md text-outline uppercase tracking-wider" id="status-text">IDLE</span></div></div></header>
+<main class="relative pt-16 bg-surface min-h-screen w-full px-space-lg"><div class="flex flex-col w-full">
+
+<div class="flex flex-col lg:flex-row lg:items-center justify-between gap-space-md py-space-sm mb-space-lg">
+<div class="flex items-center gap-space-md">
+<div class="bg-surface-container-lowest p-1 rounded-xl flex items-center shadow-md">
+<button class="flex items-center gap-space-sm px-space-lg py-space-sm rounded-lg font-headline-sm text-headline-sm transition-all duration-200 bg-primary-container text-on-primary-container shadow-sm" id="tab-btn-monitor-2" onclick="switchView('monitor')">
+<span class="material-symbols-outlined text-[18px]">stream</span><span>Monitor</span>
+</button>
+<button class="flex items-center gap-space-sm px-space-lg py-space-sm rounded-lg font-headline-sm text-headline-sm transition-all duration-200 text-on-surface-variant hover:text-on-surface" id="tab-btn-copilot-2" onclick="switchView('copilot')">
+<span class="material-symbols-outlined text-[18px]">smart_toy</span><span>Talk to Copilot</span>
+</button>
+</div>
+</div>
+</div>
+
+<div class="flex items-center justify-between gap-space-md bg-surface-container-lowest text-on-surface-variant px-space-lg py-space-xs rounded-xl mb-space-lg shadow-sm" id="toast-banner">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-secondary text-[18px]">verified_user</span>
+<span class="font-label-sm text-label-sm text-on-surface">AssemblyAI Streaming STT · Claude/Groq claim verification · Live policy engine</span>
+</div>
+<button class="text-outline hover:text-on-surface ml-2" onclick="document.getElementById('toast-banner').style.display='none'"><span class="material-symbols-outlined text-[16px]">close</span></button>
+</div>
+
+<!-- ==================== VIEW 1: MONITOR ==================== -->
+<div class="flex flex-col gap-space-lg" id="view-monitor">
+<div class="grid grid-cols-1 xl:grid-cols-12 gap-space-lg items-stretch">
+<div class="xl:col-span-4 bg-surface-container-low rounded-xl p-space-lg flex flex-col justify-between shadow-md relative overflow-hidden">
+<div class="flex items-center justify-between mb-space-md">
+<div class="flex flex-col"><span class="font-label-sm text-label-sm text-outline uppercase tracking-wider">Audio Input</span><span class="font-headline-sm text-headline-sm text-on-surface">Live Call Wiretap</span></div>
+</div>
+<div class="flex items-center gap-space-lg py-space-sm my-auto">
+<button class="relative group flex items-center justify-center w-16 h-16 rounded-full bg-surface-variant text-outline transition-transform active:scale-95" id="monitor-toggle-btn" onclick="toggleListeningState()">
+<span class="absolute -inset-1.5 rounded-full bg-primary-container/40 blur-md animate-pulse hidden" id="monitor-glow"></span>
+<span class="material-symbols-outlined text-[30px] relative z-10" id="monitor-icon">mic_off</span>
+</button>
+<div class="flex flex-col flex-1 min-w-0">
+<span class="font-headline-md text-headline-md text-on-surface" id="monitor-toggle-label">Start Listening</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant truncate" id="monitor-toggle-sub">Stream idle · Click to engage mic</span>
+</div>
+</div>
+</div>
+<div class="xl:col-span-8 grid grid-cols-2 md:grid-cols-4 gap-space-md">
+<div class="bg-surface-container-low rounded-xl p-space-md flex flex-col justify-between shadow-sm">
+<div class="flex items-center justify-between text-outline"><span class="font-label-sm text-label-sm uppercase">Checked</span><span class="material-symbols-outlined text-[18px]">fact_check</span></div>
+<div class="my-space-xs"><span class="font-metric-display text-metric-display text-on-surface" id="metric-total">0</span><span class="font-body-sm text-body-sm text-on-surface-variant block">Total Claims</span></div>
+</div>
+<div class="bg-surface-container-low rounded-xl p-space-md flex flex-col justify-between shadow-sm relative overflow-hidden">
+<div class="flex items-center justify-between text-tertiary"><span class="font-label-sm text-label-sm uppercase">High Risk</span><span class="material-symbols-outlined text-[18px]">crisis_alert</span></div>
+<div class="my-space-xs"><span class="font-metric-display text-metric-display text-tertiary" id="metric-high">0</span><span class="font-body-sm text-body-sm text-on-surface-variant block">Action Required</span></div>
+</div>
+<div class="bg-surface-container-low rounded-xl p-space-md flex flex-col justify-between shadow-sm">
+<div class="flex items-center justify-between text-error"><span class="font-label-sm text-label-sm uppercase">Contradicted</span><span class="material-symbols-outlined text-[18px]">rule</span></div>
+<div class="my-space-xs"><span class="font-metric-display text-metric-display text-on-surface" id="metric-contradicted">0</span><span class="font-body-sm text-body-sm text-on-surface-variant block">Policy Mismatches</span></div>
+</div>
+<div class="bg-surface-container-low rounded-xl p-space-md flex flex-col justify-between shadow-sm">
+<div class="flex items-center justify-between text-outline"><span class="font-label-sm text-label-sm uppercase">Call Status</span><span class="material-symbols-outlined text-[18px] text-tertiary">security_update_warning</span></div>
+<div class="my-space-xs"><span class="font-headline-sm text-headline-sm text-tertiary font-bold tracking-tight block" id="metric-status-label">NOMINAL</span><span class="font-metric-display text-[22px] leading-tight text-on-surface font-label-lg" id="metric-status-score">0% Risk</span></div>
+</div>
+</div>
+</div>
+
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-space-md bg-surface-container-low p-space-md rounded-xl">
+<div class="flex items-center gap-space-xs">
+<button class="claim-filter-btn px-space-md py-space-xs rounded-lg bg-surface-container-high text-primary font-label-md text-label-md transition-colors" id="filter-all" onclick="filterClaims('all')">All Claims (<span id="count-all">0</span>)</button>
+<button class="claim-filter-btn px-space-md py-space-xs rounded-lg text-on-surface-variant hover:text-on-surface font-label-md text-label-md transition-colors" id="filter-high" onclick="filterClaims('high')">High Risk (<span id="count-high">0</span>)</button>
+<button class="claim-filter-btn px-space-md py-space-xs rounded-lg text-on-surface-variant hover:text-on-surface font-label-md text-label-md transition-colors" id="filter-rep" onclick="filterClaims('rep')">Speaker: Rep (<span id="count-rep">0</span>)</button>
+</div>
+</div>
+
+<div class="hidden flex-col items-center justify-center p-space-xl bg-surface-container-lowest rounded-xl text-center py-20" id="empty-state-view">
+<div class="w-16 h-16 rounded-full bg-surface-container-high flex items-center justify-center mb-space-md"><span class="material-symbols-outlined text-outline text-[32px]">hearing</span></div>
+<span class="font-headline-md text-headline-md text-on-surface">No Claims Recorded Yet</span>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-md mt-space-xs">Click <strong class="text-primary font-semibold">'Start Listening'</strong> and speak a checkable claim (refunds, delivery times, support hours) to see it verified live.</p>
+</div>
+
+<div class="flex flex-col gap-space-md" id="claims-feed-container"></div>
+</div>
+
+<!-- ==================== VIEW 2: TALK TO COPILOT ==================== -->
+<div class="hidden flex-col gap-space-lg" id="view-copilot">
+<div class="flex flex-col lg:flex-row lg:items-center justify-between gap-space-md bg-surface-container-low p-space-lg rounded-xl shadow-md">
+<div class="flex items-center gap-space-lg">
+<button class="relative flex items-center justify-center w-14 h-14 rounded-full bg-primary-container text-on-primary-container shadow-xl active:scale-95 transition-transform" id="btn" onclick="toggleCopilotCall()">
+<span class="absolute -inset-1 rounded-full bg-primary-container/40 blur animate-pulse hidden" id="copilot-glow-ring"></span>
+<span class="material-symbols-outlined text-[28px] relative z-10" id="copilot-mic-icon">call</span>
+</button>
+<div class="flex flex-col">
+<div class="flex items-center gap-space-sm">
+<span class="font-headline-md text-headline-md text-on-surface">ClaimGuard Voice Copilot</span>
+<span class="bg-surface-container-highest text-outline font-label-sm text-label-sm px-2 py-0.5 rounded-full flex items-center gap-1" id="copilot-status-badge"><span class="w-1.5 h-1.5 rounded-full bg-outline"></span> Idle</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant">AssemblyAI Voice Agent API · ask about risk, flagged claims, or say "escalate this call"</span>
+</div>
+</div>
+<div class="flex items-center gap-space-md">
+<div class="flex items-center gap-space-md bg-surface-container-lowest px-space-lg py-space-sm rounded-xl">
+<div class="flex flex-col"><span class="font-label-sm text-label-sm text-outline">DURATION</span><span class="font-label-md text-label-md text-on-surface font-semibold tabular-nums" id="elapsed">0:00</span></div>
+<div class="h-6 w-px bg-surface-variant"></div>
+<div class="flex flex-col"><span class="font-label-sm text-label-sm text-outline">SESSION COST</span><span class="font-label-md text-label-md text-secondary font-semibold tabular-nums" id="cost">$0.000</span></div>
+</div>
+</div>
+</div>
+
+<div class="bg-surface-container rounded-xl p-space-lg flex flex-col gap-space-md shadow-sm">
+<div class="flex items-center justify-between pb-space-sm"><span class="font-label-sm text-label-sm text-outline uppercase tracking-wider">Live Copilot Transcript</span></div>
+<div class="flex flex-col gap-space-md" id="copilot-transcript">
+<p class="font-body-sm text-body-sm text-on-surface-variant text-center py-space-xl">Click the call button and ask: "What's the risk on demo-call-1 right now?"</p>
+</div>
+
+<div class="bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm mt-space-md">
+<button class="w-full flex items-center justify-between px-space-lg py-space-md bg-surface-container hover:bg-surface-container-high transition-colors" onclick="toggleEventLog()">
+<div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-outline text-[18px]">terminal</span><span class="font-label-md text-label-md text-on-surface font-semibold uppercase tracking-wider">Raw Event Log</span><span class="bg-surface-container-lowest text-outline font-label-sm text-label-sm px-2 py-0.5 rounded" id="event-log-count">0 Events</span></div>
+<div class="flex items-center gap-space-xs text-outline"><span class="font-label-sm text-label-sm" id="log-toggle-label">Expand</span><span class="material-symbols-outlined text-[18px] transition-transform duration-200" id="log-chevron">expand_more</span></div>
+</button>
+<div class="hidden p-space-lg flex-col gap-2 font-label-sm text-label-sm text-outline-variant bg-surface-container-lowest overflow-x-auto max-h-64 overflow-y-auto" id="event-log-drawer"></div>
+</div>
+</div>
+</div>
+
+</div></main></div>
+
+<div class="fixed bottom-6 right-6 bg-surface-bright text-on-surface font-label-md text-label-md px-space-lg py-space-sm rounded-xl shadow-xl transition-all duration-300 transform translate-y-16 opacity-0 pointer-events-none z-50 flex items-center gap-space-sm" id="action-toast">
+<span class="material-symbols-outlined text-[18px] text-primary">info</span><span id="toast-text">Action completed</span>
+</div>
 
 <script>
-let ws, audioCtx, source, processor, stream;
-let listening = false;
+// =================== shared helpers ===================
+function switchView(tab) {
+  const monitorView = document.getElementById('view-monitor');
+  const copilotView = document.getElementById('view-copilot');
+  const onBtn = 'flex items-center gap-space-sm px-space-lg py-space-sm rounded-lg font-headline-sm text-headline-sm transition-all duration-200 bg-primary-container text-on-primary-container shadow-sm';
+  const offBtn = 'flex items-center gap-space-sm px-space-lg py-space-sm rounded-lg font-headline-sm text-headline-sm transition-all duration-200 text-on-surface-variant hover:text-on-surface';
+  if (tab === 'monitor') {
+    monitorView.classList.remove('hidden'); copilotView.classList.add('hidden');
+    document.getElementById('tab-btn-monitor-2').className = onBtn;
+    document.getElementById('tab-btn-copilot-2').className = offBtn;
+  } else {
+    monitorView.classList.add('hidden'); copilotView.classList.remove('hidden');
+    document.getElementById('tab-btn-copilot-2').className = onBtn;
+    document.getElementById('tab-btn-monitor-2').className = offBtn;
+  }
+}
+
+let toastTimeout;
+function flashAction(msg) {
+  const toast = document.getElementById('action-toast');
+  document.getElementById('toast-text').innerText = msg;
+  toast.classList.remove('translate-y-16', 'opacity-0');
+  toast.classList.add('translate-y-0', 'opacity-100');
+  clearTimeout(toastTimeout);
+  toastTimeout = setTimeout(() => {
+    toast.classList.add('translate-y-16', 'opacity-0');
+    toast.classList.remove('translate-y-0', 'opacity-100');
+  }, 3200);
+}
+
+function toggleEventLog() {
+  const drawer = document.getElementById('event-log-drawer');
+  const chevron = document.getElementById('log-chevron');
+  const label = document.getElementById('log-toggle-label');
+  const expanded = drawer.classList.contains('flex');
+  if (!expanded) {
+    drawer.classList.remove('hidden'); drawer.classList.add('flex');
+    chevron.style.transform = 'rotate(180deg)'; label.innerText = 'Collapse';
+  } else {
+    drawer.classList.add('hidden'); drawer.classList.remove('flex');
+    chevron.style.transform = 'rotate(0deg)'; label.innerText = 'Expand';
+  }
+}
+
+function setGlobalStatus(state) {
+  const beacon = document.getElementById('status-beacon');
+  const text = document.getElementById('status-text');
+  const colors = { idle: ['bg-outline','text-outline'], listening: ['bg-secondary','text-secondary'], speaking: ['bg-primary','text-primary'], error: ['bg-tertiary','text-tertiary'] };
+  const [dot, txt] = colors[state] || colors.idle;
+  const pulse = state !== 'idle' ? `<span class="animate-ping absolute inline-flex h-full w-full rounded-full ${dot} opacity-75"></span>` : '';
+  beacon.innerHTML = `${pulse}<span class="relative inline-flex rounded-full h-2 w-2 ${dot}"></span>`;
+  text.className = `font-label-md text-label-md ${txt} uppercase tracking-wider`;
+  text.innerText = state;
+}
+
+// =================== MONITOR: real mic + real claims feed ===================
+let monitorWs = null, monitorCtx = null, monitorSource = null, monitorProcessor = null, monitorStream = null;
+let isListening = false;
 
 function downsampleTo16k(buf, inRate) {
   if (inRate === 16000) return buf;
@@ -65,67 +214,445 @@ function floatTo16BitPCM(f32) {
   return buf;
 }
 
-async function startListening() {
-  const wsProtocol = location.protocol === "https:" ? "wss:" : "ws:";
-  ws = new WebSocket(`${wsProtocol}//${location.host}/ws/audio`);
-  ws.binaryType = "arraybuffer";
-  await new Promise((resolve, reject) => { ws.onopen = resolve; ws.onerror = reject; });
+async function toggleListeningState() {
+  if (isListening) { stopMonitorListening(); return; }
+  const btn = document.getElementById('monitor-toggle-btn');
+  const icon = document.getElementById('monitor-icon');
+  const glow = document.getElementById('monitor-glow');
+  const label = document.getElementById('monitor-toggle-label');
+  const sub = document.getElementById('monitor-toggle-sub');
+  try {
+    const wsProtocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+    monitorWs = new WebSocket(`${wsProtocol}//${location.host}/ws/audio`);
+    monitorWs.binaryType = 'arraybuffer';
+    await new Promise((resolve, reject) => { monitorWs.onopen = resolve; monitorWs.onerror = reject; });
 
-  stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  source = audioCtx.createMediaStreamSource(stream);
-  processor = audioCtx.createScriptProcessor(4096, 1, 1);
-  const mute = audioCtx.createGain();
-  mute.gain.value = 0;
+    monitorStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    monitorCtx = new (window.AudioContext || window.webkitAudioContext)();
+    monitorSource = monitorCtx.createMediaStreamSource(monitorStream);
+    monitorProcessor = monitorCtx.createScriptProcessor(4096, 1, 1);
+    const mute = monitorCtx.createGain(); mute.gain.value = 0;
+    monitorProcessor.onaudioprocess = (e) => {
+      const input = e.inputBuffer.getChannelData(0);
+      const down = downsampleTo16k(input, monitorCtx.sampleRate);
+      const pcm = floatTo16BitPCM(down);
+      if (monitorWs.readyState === WebSocket.OPEN) monitorWs.send(pcm);
+    };
+    monitorSource.connect(monitorProcessor);
+    monitorProcessor.connect(mute);
+    mute.connect(monitorCtx.destination);
 
-  processor.onaudioprocess = (e) => {
-    const input = e.inputBuffer.getChannelData(0);
-    const down = downsampleTo16k(input, audioCtx.sampleRate);
-    const pcm = floatTo16BitPCM(down);
-    if (ws.readyState === WebSocket.OPEN) ws.send(pcm);
+    isListening = true;
+    btn.className = 'relative group flex items-center justify-center w-16 h-16 rounded-full bg-primary-container text-on-primary-container shadow-xl transition-transform active:scale-95';
+    icon.innerText = 'mic'; glow.classList.remove('hidden');
+    label.innerText = 'Stop Listening'; sub.innerText = 'Real-time STT active';
+    setGlobalStatus('listening');
+    flashAction('Live listening started');
+  } catch (err) {
+    flashAction('Could not access microphone: ' + err.message);
+  }
+}
+
+function stopMonitorListening() {
+  if (monitorProcessor) monitorProcessor.disconnect();
+  if (monitorSource) monitorSource.disconnect();
+  if (monitorStream) monitorStream.getTracks().forEach(t => t.stop());
+  if (monitorWs) monitorWs.close();
+  isListening = false;
+  const btn = document.getElementById('monitor-toggle-btn');
+  const icon = document.getElementById('monitor-icon');
+  const glow = document.getElementById('monitor-glow');
+  document.getElementById('monitor-toggle-label').innerText = 'Start Listening';
+  document.getElementById('monitor-toggle-sub').innerText = 'Stream idle · Click to engage mic';
+  btn.className = 'relative group flex items-center justify-center w-16 h-16 rounded-full bg-surface-variant text-outline transition-transform active:scale-95';
+  icon.innerText = 'mic_off'; glow.classList.add('hidden');
+  setGlobalStatus('idle');
+  flashAction('Listening stopped');
+}
+
+let currentFilter = 'all';
+let lastClaimsJSON = '';
+
+function riskBorderColor(risk) { return risk === 'high' ? 'bg-tertiary-container' : risk === 'medium' ? 'bg-error' : 'bg-secondary'; }
+function verdictBadge(verdict) {
+  if (verdict === 'contradicted') return '<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full font-label-sm text-label-sm bg-tertiary-container text-on-tertiary-container font-semibold">Contradicted</span>';
+  if (verdict === 'supported') return '<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full font-label-sm text-label-sm bg-secondary-container/20 text-secondary font-medium">Supported</span>';
+  return '<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full font-label-sm text-label-sm bg-surface-container-highest text-error font-medium">Insufficient</span>';
+}
+function riskBadge(risk, confidence) {
+  const pct = Math.round((confidence || 0) * 100);
+  if (risk === 'high') return `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full font-label-sm text-label-sm bg-tertiary/10 text-tertiary font-bold">HIGH RISK (${pct}% Conf.)</span>`;
+  if (risk === 'medium') return `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full font-label-sm text-label-sm bg-error-container/20 text-error font-bold">MEDIUM RISK (${pct}% Conf.)</span>`;
+  return `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full font-label-sm text-label-sm bg-surface-container-lowest text-secondary font-semibold">LOW RISK (${pct}% Conf.)</span>`;
+}
+
+function renderClaims(claims) {
+  const feed = document.getElementById('claims-feed-container');
+  const empty = document.getElementById('empty-state-view');
+  if (!claims.length) {
+    feed.classList.add('hidden'); empty.classList.remove('hidden'); empty.classList.add('flex');
+  } else {
+    feed.classList.remove('hidden'); empty.classList.add('hidden'); empty.classList.remove('flex');
+  }
+  const visible = claims.slice().reverse().filter(c => {
+    if (currentFilter === 'all') return true;
+    if (currentFilter === 'high') return c.risk === 'high';
+    if (currentFilter === 'rep') return c.speaker === 'rep';
+    return true;
+  });
+  feed.innerHTML = visible.map(c => {
+    const time = new Date(c.ts).toLocaleTimeString();
+    return `
+    <div class="claim-card bg-surface-container rounded-xl p-space-lg shadow-sm hover:bg-surface-container-high transition-colors relative">
+      <div class="absolute left-0 top-3 bottom-3 w-1 ${riskBorderColor(c.risk)} rounded-r"></div>
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-space-sm mb-space-sm pl-2">
+        <div class="flex items-center gap-space-sm">
+          <span class="bg-primary-container/20 text-primary font-label-sm text-label-sm px-2.5 py-0.5 rounded-md font-bold uppercase">${c.speaker}</span>
+          <span class="font-label-sm text-label-sm text-outline">${time}</span>
+        </div>
+        <div class="flex items-center gap-space-sm">${verdictBadge(c.verdict)}${riskBadge(c.risk, c.confidence)}</div>
+      </div>
+      <div class="pl-2 mb-space-md">
+        <div class="font-headline-sm text-headline-sm text-on-surface mb-space-xs font-normal">"${c.text}"</div>
+        <div class="flex items-start gap-space-sm bg-surface-container-lowest p-space-md rounded-lg mt-space-sm">
+          <span class="material-symbols-outlined text-outline text-[20px] shrink-0 mt-0.5">policy</span>
+          <div class="flex flex-col text-on-surface-variant font-body-sm text-body-sm">${c.evidence}</div>
+        </div>
+      </div>
+      <div class="flex flex-wrap items-center justify-between gap-space-sm pt-space-sm pl-2">
+        <button class="flex items-center gap-1 bg-tertiary-container text-on-tertiary-container hover:bg-tertiary px-space-md py-1.5 rounded-lg font-label-sm text-label-sm font-semibold transition-colors" onclick='escalateClaim(${JSON.stringify(c.id)}, ${JSON.stringify(c.text)})'>
+          <span class="material-symbols-outlined text-[16px]">notification_important</span><span>Flag to Supervisor</span>
+        </button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function updateMetrics(claims) {
+  const total = claims.length;
+  const high = claims.filter(c => c.risk === 'high').length;
+  const contradicted = claims.filter(c => c.verdict === 'contradicted').length;
+  const rep = claims.filter(c => c.speaker === 'rep').length;
+  document.getElementById('metric-total').innerText = total;
+  document.getElementById('metric-high').innerText = high;
+  document.getElementById('metric-contradicted').innerText = contradicted;
+  document.getElementById('count-all').innerText = total;
+  document.getElementById('count-high').innerText = high;
+  document.getElementById('count-rep').innerText = rep;
+  const score = total ? Math.round((high / total) * 100) : 0;
+  document.getElementById('metric-status-score').innerText = score + '% Risk';
+  document.getElementById('metric-status-label').innerText = high > 0 ? 'ELEVATED RISK' : (total > 0 ? 'NOMINAL' : 'IDLE');
+}
+
+async function escalateClaim(claimId, text) {
+  try {
+    const r = await fetch('/tools/escalate', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ call_id: 'demo-call-1', reason: 'Manually flagged from dashboard: ' + text })
+    });
+    if (r.ok) flashAction('Supervisor notified about this claim'); else flashAction('Could not escalate — check backend logs');
+  } catch (e) { flashAction('Escalate failed: ' + e.message); }
+}
+
+function filterClaims(category) {
+  currentFilter = category;
+  document.querySelectorAll('.claim-filter-btn').forEach(b => {
+    b.className = 'claim-filter-btn px-space-md py-space-xs rounded-lg text-on-surface-variant hover:text-on-surface font-label-md text-label-md transition-colors';
+  });
+  document.getElementById('filter-' + category).className = 'claim-filter-btn px-space-md py-space-xs rounded-lg bg-surface-container-high text-primary font-label-md text-label-md transition-colors';
+  pollClaims(true);
+}
+
+async function pollClaims(force) {
+  try {
+    const res = await fetch('/api/claims?call_id=demo-call-1');
+    const claims = await res.json();
+    const json = JSON.stringify(claims);
+    if (!force && json === lastClaimsJSON) return;
+    lastClaimsJSON = json;
+    renderClaims(claims);
+    updateMetrics(claims);
+  } catch (e) { /* backend waking up on Render free tier, ignore transient errors */ }
+}
+setInterval(pollClaims, 2000);
+pollClaims(true);
+
+fetch('/api/claims').then(r => { document.getElementById('backend-health').innerText = r.ok ? 'Online' : 'Error'; })
+  .catch(() => { document.getElementById('backend-health').innerText = 'Offline'; });
+
+// =================== TALK TO COPILOT: real AssemblyAI Voice Agent connection ===================
+const WIRE_RATE = 24000;
+const CAPTURE_WORKLET = `
+  class CaptureProcessor extends AudioWorkletProcessor {
+    constructor() {
+      super();
+      this._ratio = sampleRate / ${WIRE_RATE};
+      this._pos = 0; this._prev = 0; this._src = null; this._out = null;
+    }
+    _toPcm(samples, len) {
+      const pcm = new Int16Array(len);
+      for (let i = 0; i < len; i++) { const s = Math.max(-1, Math.min(1, samples[i])); pcm[i] = s < 0 ? s * 0x8000 : s * 0x7fff; }
+      return pcm;
+    }
+    process(inputs) {
+      const ch = inputs[0]?.[0];
+      if (!ch) return true;
+      if (this._ratio === 1) { const pcm = this._toPcm(ch, ch.length); this.port.postMessage(pcm.buffer, [pcm.buffer]); return true; }
+      const n = ch.length;
+      if (!this._src || this._src.length < n + 1) { this._src = new Float32Array(n + 1); this._out = new Float32Array(Math.ceil((n + 1) / this._ratio) + 2); }
+      const src = this._src; const out = this._out;
+      src[0] = this._prev; src.set(ch, 1);
+      let outLen = 0; let pos = this._pos;
+      while (pos < n) { const i = Math.floor(pos); const frac = pos - i; out[outLen++] = src[i] + (src[i + 1] - src[i]) * frac; pos += this._ratio; }
+      this._pos = pos - n; this._prev = ch[n - 1];
+      if (outLen) { const pcm = this._toPcm(out, outLen); this.port.postMessage(pcm.buffer, [pcm.buffer]); }
+      return true;
+    }
+  }
+  registerProcessor('capture', CaptureProcessor);
+`;
+const PLAYBACK_WORKLET = `
+  class PlaybackProcessor extends AudioWorkletProcessor {
+    constructor() {
+      super();
+      this._ring = new Float32Array(sampleRate * 30);
+      this._writePos = 0; this._readPos = 0; this._available = 0;
+      this._step = ${WIRE_RATE} / sampleRate; this._rsPos = 0; this._rsPrev = 0; this._drained = false;
+      this.port.onmessage = (e) => {
+        if (e.data === 'stop') { this._writePos = this._readPos = this._available = 0; this._rsPos = this._rsPrev = 0; return; }
+        const int16 = new Int16Array(e.data);
+        if (!int16.length) return;
+        if (this._drained) { this._rsPrev = 0; this._rsPos = 0; this._drained = false; }
+        if (this._step === 1) { for (let i = 0; i < int16.length; i++) this._push(int16[i] / 32768); return; }
+        const n = int16.length; let pos = this._rsPos;
+        while (pos < n) { const i = Math.floor(pos); const frac = pos - i; const a = i === 0 ? this._rsPrev : int16[i - 1] / 32768; const b = int16[i] / 32768; this._push(a + (b - a) * frac); pos += this._step; }
+        this._rsPos = pos - n; this._rsPrev = int16[n - 1] / 32768;
+      };
+    }
+    _push(v) { if (this._available < this._ring.length) { this._ring[this._writePos] = v; this._writePos = (this._writePos + 1) % this._ring.length; this._available++; } }
+    process(inputs, outputs) {
+      const output = outputs[0]; const out = output[0]; const cap = this._ring.length;
+      for (let i = 0; i < out.length; i++) {
+        if (this._available > 0) { out[i] = this._ring[this._readPos]; this._readPos = (this._readPos + 1) % cap; this._available--; }
+        else { out[i] = 0; this._drained = true; }
+      }
+      for (let ch = 1; ch < output.length; ch++) output[ch].set(out);
+      return true;
+    }
+  }
+  registerProcessor('playback', PlaybackProcessor);
+`;
+const blobUrl = (code) => URL.createObjectURL(new Blob([code], { type: 'application/javascript' }));
+
+let copilotWs, captureCtx, playbackCtx, playback, mic, callStart, timer;
+let copilotLive = false;
+const COST_PER_SECOND = 4.5 / 3600;
+
+async function addWorklet(ctx, code, name) {
+  const url = blobUrl(code);
+  try { await ctx.audioWorklet.addModule(url); } finally { URL.revokeObjectURL(url); }
+  return new AudioWorkletNode(ctx, name);
+}
+
+function setCopilotStatus(state, detail) {
+  const badge = document.getElementById('copilot-status-badge');
+  const map = {
+    idle: ['bg-outline', 'Idle', 'bg-surface-container-highest text-outline'],
+    connecting: ['bg-primary', 'Connecting...', 'bg-primary-container/20 text-primary'],
+    listening: ['bg-secondary', 'Listening', 'bg-secondary-container/20 text-secondary'],
+    speaking: ['bg-primary', 'Speaking', 'bg-primary-container/20 text-primary'],
+    error: ['bg-tertiary', detail || 'Error', 'bg-tertiary-container/20 text-tertiary'],
   };
-
-  source.connect(processor);
-  processor.connect(mute);
-  mute.connect(audioCtx.destination);
-
-  listening = true;
-  document.getElementById("dot").classList.add("live");
-  document.getElementById("statusText").textContent = "Listening";
-  const btn = document.getElementById("micBtn");
-  btn.textContent = "⏹️ Stop Listening";
-  btn.classList.add("stop");
+  const [dot, label, cls] = map[state] || map.idle;
+  badge.className = cls + ' font-label-sm text-label-sm px-2 py-0.5 rounded-full flex items-center gap-1';
+  badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full ${dot}"></span> ${label}`;
+  setGlobalStatus(state === 'error' ? 'error' : state === 'idle' ? 'idle' : state);
 }
 
-function stopListening() {
-  if (processor) processor.disconnect();
-  if (source) source.disconnect();
-  if (stream) stream.getTracks().forEach(t => t.stop());
-  if (ws) ws.close();
-  listening = false;
-  document.getElementById("dot").classList.remove("live");
-  document.getElementById("statusText").textContent = "Not listening";
-  const btn = document.getElementById("micBtn");
-  btn.textContent = "🎙️ Start Listening";
-  btn.classList.remove("stop");
+function logEvent(dir, type, detail) {
+  const drawer = document.getElementById('event-log-drawer');
+  const row = document.createElement('div');
+  row.className = 'flex items-center gap-2 py-1';
+  const arrow = dir === 'up' ? '↑' : '↓';
+  row.innerHTML = `<span class="text-primary font-medium">[${new Date().toLocaleTimeString()}]</span><span class="text-secondary">${arrow} ${type}</span>${detail ? `<span class="text-outline truncate max-w-md">${String(detail).slice(0,120)}</span>` : ''}`;
+  drawer.appendChild(row);
+  drawer.scrollTop = drawer.scrollHeight;
+  const count = drawer.children.length;
+  document.getElementById('event-log-count').innerText = count + ' Events';
 }
 
-document.getElementById("micBtn").onclick = () => listening ? stopListening() : startListening();
-
-async function poll() {
-  const res = await fetch(`/api/claims?call_id=demo-call-1`);
-  const claims = await res.json();
-  const el = document.getElementById('claims');
-  if (!claims.length) { el.innerHTML = '<div class="empty">Click "Start Listening" and speak.</div>'; return; }
-  el.innerHTML = claims.slice().reverse().map(c => `
-    <div class="claim ${c.risk}">
-      <div class="badge"><span>${c.speaker}</span> · <span>${c.verdict}</span> · <span class="risk-${c.risk}">${c.risk} risk</span> · <span>${(c.confidence*100).toFixed(0)}%</span></div>
-      <div class="claim-text">${c.text}</div>
-      <div class="evidence">${c.evidence}</div>
-    </div>`).join('');
+function addTranscriptLine(role, text) {
+  const box = document.getElementById('copilot-transcript');
+  if (box.dataset.empty !== 'false') { box.innerHTML = ''; box.dataset.empty = 'false'; }
+  let html;
+  if (role === 'you') {
+    html = `<div class="flex flex-col sm:flex-row sm:items-start gap-space-md self-end max-w-2xl w-full ml-auto">
+      <div class="flex-1 bg-surface-container-highest p-space-md rounded-xl rounded-tr-none shadow-sm">
+        <div class="font-label-sm text-label-sm text-primary font-bold mb-1">You</div>
+        <p class="font-body-md text-body-md text-on-surface">${text}</p>
+      </div></div>`;
+  } else if (role === 'tool') {
+    html = `<div class="flex items-center gap-space-sm self-center bg-surface-container-lowest text-primary font-label-sm text-label-sm px-space-lg py-1.5 rounded-full shadow-sm">
+      <span class="material-symbols-outlined text-[16px] text-primary">bolt</span><span>${text}</span></div>`;
+  } else {
+    html = `<div class="flex flex-col sm:flex-row sm:items-start gap-space-md self-start max-w-2xl w-full">
+      <div class="w-8 h-8 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container shrink-0"><span class="material-symbols-outlined text-[18px]">smart_toy</span></div>
+      <div class="flex-1 bg-surface-container-low p-space-md rounded-xl rounded-tl-none shadow-sm">
+        <div class="font-label-sm text-label-sm text-secondary font-bold mb-1">ClaimGuard Copilot</div>
+        <p class="font-body-md text-body-md text-on-surface leading-relaxed">${text}</p>
+      </div></div>`;
+  }
+  box.insertAdjacentHTML('beforeend', html);
+  box.scrollTop = box.scrollHeight;
+  return box.lastElementChild;
 }
-setInterval(poll, 2000);
-poll();
+
+let partialEl = {};
+function setPartial(role, text) {
+  if (!text) return;
+  if (partialEl[role] && partialEl[role].isConnected) {
+    const p = partialEl[role].querySelector('p');
+    if (p) p.innerText = text;
+  } else {
+    partialEl[role] = addTranscriptLine(role, text);
+  }
+}
+function finalizeLine(role, text) {
+  if (partialEl[role] && partialEl[role].isConnected) {
+    const p = partialEl[role].querySelector('p');
+    if (p) p.innerText = text;
+  } else {
+    addTranscriptLine(role, text);
+  }
+  partialEl[role] = null;
+}
+
+function tick() {
+  const seconds = Math.floor((Date.now() - callStart) / 1000);
+  document.getElementById('elapsed').textContent = Math.floor(seconds / 60) + ':' + String(seconds % 60).padStart(2, '0');
+  document.getElementById('cost').textContent = '$' + (seconds * COST_PER_SECOND).toFixed(3);
+}
+
+async function toggleCopilotCall() {
+  if (copilotLive) { stopCopilotCall(); return; }
+  const btn = document.getElementById('btn');
+  const icon = document.getElementById('copilot-mic-icon');
+  const ring = document.getElementById('copilot-glow-ring');
+  btn.disabled = true;
+  setCopilotStatus('connecting');
+  try {
+    const res = await fetch('/token');
+    if (!res.ok) { setCopilotStatus('error', 'could not mint a token, check the API key'); btn.disabled = false; return; }
+    const { token } = await res.json();
+
+    captureCtx = new AudioContext({ sampleRate: WIRE_RATE });
+    playbackCtx = new AudioContext({ sampleRate: WIRE_RATE });
+    await Promise.all([captureCtx.resume(), playbackCtx.resume()]);
+
+    playback = await addWorklet(playbackCtx, PLAYBACK_WORKLET, 'playback');
+    playback.connect(playbackCtx.destination);
+
+    mic = await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, echoCancellation: true, noiseSuppression: false, autoGainControl: false } });
+    const capture = await addWorklet(captureCtx, CAPTURE_WORKLET, 'capture');
+    captureCtx.createMediaStreamSource(mic).connect(capture);
+
+    const url = new URL('wss://agents.assemblyai.com/v1/ws');
+    url.searchParams.set('token', token);
+    copilotWs = new WebSocket(url);
+    let ready = false;
+
+    capture.port.onmessage = ({ data }) => {
+      if (!ready || copilotWs.readyState !== 1) return;
+      const bytes = new Uint8Array(data);
+      let binary = '';
+      for (let i = 0; i < bytes.length; i += 0x8000) binary += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+      copilotWs.send(JSON.stringify({ type: 'input.audio', audio: btoa(binary) }));
+    };
+
+    copilotWs.onopen = () => {
+      copilotWs.send(JSON.stringify({ type: 'session.update', session: { agent_id: window.AGENT.id } }));
+      logEvent('up', 'session.update', window.AGENT.id);
+    };
+
+    copilotWs.onmessage = ({ data }) => {
+      const msg = JSON.parse(data);
+      switch (msg.type) {
+        case 'session.ready':
+          ready = true; callStart = Date.now(); timer = setInterval(tick, 1000); tick();
+          setCopilotStatus('listening');
+          copilotLive = true; btn.disabled = false;
+          icon.innerText = 'call_end'; ring.classList.remove('hidden');
+          btn.className = 'relative flex items-center justify-center w-14 h-14 rounded-full bg-tertiary-container text-on-tertiary-container shadow-xl active:scale-95 transition-transform';
+          logEvent('down', msg.type, msg.session_id);
+          break;
+        case 'input.speech.started':
+          playback?.port.postMessage('stop'); setCopilotStatus('listening'); logEvent('down', msg.type); break;
+        case 'reply.started':
+          setCopilotStatus('speaking'); logEvent('down', msg.type); break;
+        case 'reply.audio': {
+          const raw = atob(msg.data); const bytes = new Uint8Array(raw.length);
+          for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
+          playback?.port.postMessage(bytes.buffer, [bytes.buffer]);
+          break;
+        }
+        case 'reply.done':
+          setCopilotStatus('listening');
+          if (msg.status === 'interrupted') playback?.port.postMessage('stop');
+          logEvent('down', msg.type, msg.status); break;
+        case 'transcript.user.delta':
+          setPartial('you', msg.text); break;
+        case 'transcript.agent.delta':
+          setPartial('agent', msg.text || ''); break;
+        case 'transcript.user':
+          finalizeLine('you', msg.text); logEvent('down', msg.type, msg.text); break;
+        case 'transcript.agent':
+          finalizeLine('agent', msg.text); logEvent('down', msg.type, msg.text); break;
+        case 'tool.call': {
+          const args = JSON.stringify(msg.arguments ?? {});
+          addTranscriptLine('tool', `🔧 ${msg.name}(${args})`);
+          logEvent('down', msg.type, `${msg.name} ${args}`);
+          break;
+        }
+        case 'session.ended':
+          logEvent('down', msg.type); copilotWs.close(); break;
+        case 'session.error':
+          setCopilotStatus('error', msg.message); logEvent('down', msg.type, `${msg.code}: ${msg.message}`); break;
+        default:
+          logEvent('down', msg.type);
+      }
+    };
+    copilotWs.onclose = () => { setCopilotStatus('idle'); resetCopilotUI(); };
+    copilotWs.onerror = () => { setCopilotStatus('error', 'connection failed'); resetCopilotUI(); };
+  } catch (error) {
+    setCopilotStatus('error', error.message); resetCopilotUI();
+  }
+}
+
+function stopCopilotCall() {
+  if (copilotWs?.readyState === 1) {
+    copilotWs.send(JSON.stringify({ type: 'session.end' }));
+    logEvent('up', 'session.end');
+    const socket = copilotWs;
+    setTimeout(() => { if (socket.readyState === 1) socket.close(); }, 3000);
+  } else { copilotWs?.close(); }
+  playback?.port.postMessage('stop');
+  mic?.getTracks().forEach(t => t.stop());
+  captureCtx?.close(); playbackCtx?.close();
+  captureCtx = playbackCtx = playback = mic = null;
+  resetCopilotUI();
+  setCopilotStatus('idle');
+}
+
+function resetCopilotUI() {
+  clearInterval(timer);
+  copilotLive = false;
+  const btn = document.getElementById('btn');
+  const icon = document.getElementById('copilot-mic-icon');
+  const ring = document.getElementById('copilot-glow-ring');
+  btn.disabled = false;
+  btn.className = 'relative flex items-center justify-center w-14 h-14 rounded-full bg-primary-container text-on-primary-container shadow-xl active:scale-95 transition-transform';
+  icon.innerText = 'call'; ring.classList.add('hidden');
+  partialEl = {};
+}
 </script>
-</body>
-</html>
+</body></html>
