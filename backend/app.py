@@ -1,5 +1,6 @@
 import os, json, time, threading, uuid, hashlib
 from datetime import datetime, timezone
+from fastapi.responses import HTMLResponse, Response
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -15,6 +16,7 @@ from assemblyai.streaming.v3 import (
 from groq import Groq
 from backend.knowledge import load_policy, search_policy
 
+VOICE_AGENT_ID = os.environ.get("VOICE_AGENT_ID", "")
 AAI_KEY = os.environ["ASSEMBLYAI_API_KEY"]
 GROQ_KEY = os.environ["GROQ_API_KEY"]
 CALL_ID = os.environ.get("CALL_ID", "demo-call-1")
@@ -202,4 +204,39 @@ async def ws_audio(websocket: WebSocket):
 
 
 # ---------- serve the dashboard itself ----------
-app.mount("/", StaticFiles(directory=os.path.join(os.path.dirname(__file__), "..", "frontend"), html=True), name="static")
+FRONTEND_DIR = os.path.join(os.path.dirname(__file__), "..", "frontend")
+
+@app.get("/")
+def dashboard():
+    with open(os.path.join(FRONTEND_DIR, "index.html"), encoding="utf-8") as f:
+        return HTMLResponse(f.read())
+
+@app.get("/app.js")
+def talk_script():
+    with open(os.path.join(FRONTEND_DIR, "talk.js"), encoding="utf-8") as f:
+        return Response(f.read(), media_type="text/javascript")
+
+@app.get("/talk")
+def talk_page():
+    agent_name = "ClaimGuard Copilot"
+    agent_json = json.dumps({"id": VOICE_AGENT_ID, "name": agent_name}).replace("<", "\\u003c")
+    with open(os.path.join(FRONTEND_DIR, "talk.html"), encoding="utf-8") as f:
+        page = f.read()
+    page = page.replace("{{AGENT_NAME}}", agent_name).replace("{{AGENT_JSON}}", agent_json)
+    return HTMLResponse(page)
+
+@app.get("/token")
+def get_token():
+    r = requests.get(
+        "https://agents.assemblyai.com/v1/token?product=voice_agent&expires_in_seconds=60",
+        headers={"Authorization": f"Bearer {AAI_KEY}"},
+    )
+    return Response(r.text, media_type="application/json", status_code=r.status_code)
+
+@app.get("/agent")
+def get_agent():
+    r = requests.get(
+        f"https://agents.assemblyai.com/v1/agents/{VOICE_AGENT_ID}",
+        headers={"Authorization": f"Bearer {AAI_KEY}"},
+    )
+    return Response(r.text, media_type="application/json", status_code=r.status_code)
